@@ -24,7 +24,7 @@ import Token
 $digit = [0-9]
 $alpha = [a-zA-Z]
 
-@id = ($alpha) ($alpha | $digit)*
+@id = ($alpha | _) ($alpha | $digit | _ | ' )*
 
 tokens :-
 
