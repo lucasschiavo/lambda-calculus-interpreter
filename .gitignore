@@ -1,9 +1,5 @@
-# only package.yaml should be used
-stack.yaml
-
 # ignore cabal files
 *.cabal
 
 # stack files
 .stack-work
-
