@@ -1,10 +1,8 @@
 module Main where
 
 import AST
-import Data.ByteString.Lazy (ByteString, append, pack, unpack)
-import Data.Maybe (fromMaybe)
 import Data.String (fromString)
-import Lexer (Range, RangedToken, runAlex)
+import Lexer (runAlex)
 import Parser (parseMiniML)
 import System.IO ()
 
