@@ -52,7 +52,8 @@ body :: { [Dec] }
   | body ';' dec { $3 : $1 }
 
 program :: { Prog }
-  : let body in exp { Prog $2 $4 }
+  : let body in exp     { Prog $2 $4 }
+  | let body ';' in exp { Prog $2 $5 }
 
 
 {
