@@ -1,6 +1,10 @@
 let
+  true = \x. \y. x;
   false = \x. \y. y;
-  true = \a. \b. a;
-  if = \bool. \cond1. \cond2. bool cond1 cond2
+  if = \c. \b1. \b2. c b1 b2;
+
+  not = \b. b false true;
+  and = \b1. \b2. if b1 b2 false;
+  or = \b1. \b2. if b1 true b2
 in
-  if false lucas else
+  if true false true

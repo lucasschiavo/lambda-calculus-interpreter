@@ -2,51 +2,48 @@ module Main (main) where
 
 import AST
 import Data.String (fromString)
+import Debug.Trace (trace)
 import Lexer (runAlex)
 import Parser (parseMiniML)
 import System.IO ()
 
 toLambdaExp :: Prog -> Exp
-toLambdaExp (Prog decs exp) = go decs exp
+toLambdaExp (Prog decs exp) = go (reverse decs) exp
  where
   go [] exp = exp
   go ((Dec name def) : xs) exp = App (Lambda name next) def
    where
     next = go xs exp
 
+alphaConvert :: Name -> Name -> Exp -> Exp
+alphaConvert name oldName lamb@(Lambda _ exp) =
+  Lambda name $ substitute oldName (Var name) exp
+
 isFreeVar :: Name -> Exp -> Bool
-isFreeVar name (Lambda varName exp)
-  | name == varName = False
-  | otherwise = isFreeVar name exp
+isFreeVar name (Var varName) = name == varName
+isFreeVar name (Lambda varName exp) = name /= varName && isFreeVar name exp
+isFreeVar name (App exp1 exp2) = isFreeVar name exp1 || isFreeVar name exp2
 
-generateFreeVar :: Name -> Exp -> Name
-generateFreeVar name exp
-  | isFreeVar name exp = name
-  | otherwise = generateFreeVar newName exp
+generateNewName :: Name -> Exp -> Name
+generateNewName name exp
+  | isFreeVar name exp = generateNewName newName exp
+  | otherwise = name
  where
-  newName = name ++ "1"
+  newName = name ++ "'"
 
-substituteDep :: Dec -> Exp -> Exp
-substituteDep (Dec name exp) var@(Var varName)
-  | name == varName = exp
-  | otherwise = var
-substituteDep dec@(Dec name exp) (App exp1 exp2) =
-  App (substituteDep dec exp1) (substituteDep dec exp2)
--- for now it does not solve variable capturing
-substituteDep dec@(Dec var decExp) lamb@(Lambda varName lambExp)
-  | var == varName = lamb
-  | otherwise = substituteDep dec lambExp
-
+-- Lambda "x" (Lambda "y" (App (Var "x") (App (Var "y") (Var "z"))))
 substitute :: Name -> Exp -> Exp -> Exp
 substitute name def var@(Var varName)
   | name == varName = def
   | otherwise = var
 substitute name def (App exp1 exp2) =
   App (substitute name def exp1) (substitute name def exp2)
--- does not solve variable capturing
 substitute name def lamb@(Lambda varName exp)
   | name == varName = lamb
-  | otherwise = Lambda varName $ substitute name def exp
+  | not $ isFreeVar varName def = Lambda varName $ substitute name def exp
+  | otherwise = Lambda newVar (substitute name def (substitute varName (Var newVar) exp))
+ where
+  newVar = generateNewName varName (App def exp)
 
 redex :: Exp -> Exp -> Exp
 redex lamb@(Lambda name exp) right =
@@ -79,7 +76,9 @@ getProg path = do
   file <- readFile path
   case runAlex (fromString file) parseMiniML of
     Right ast -> return $ Just ast
-    Left err -> return Nothing
+    Left err -> do
+      print err
+      return Nothing
 
 main :: IO ()
 main = do
@@ -89,4 +88,5 @@ main = do
     Just prog ->
       do
         let exp = toLambdaExp prog
+        print exp
         runPrint exp
