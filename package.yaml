@@ -16,3 +16,15 @@ library:
   build-tools:
   - alex
   - happy
+
+executables:
+  lambda-calculus-interpreter:
+    main:                     Main.hs
+    source-dirs: src
+    dependencies:
+    - array
+    - base
+    - bytestring
+    build-tools:
+    - alex
+    - happy

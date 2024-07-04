@@ -1,11 +1,12 @@
 module Main (main) where
 
-import AST
+import AST (Prog)
 import Data.String (fromString)
-import Interpreter
+import Interpreter (run, runPrint, toLambdaExp)
 import Lexer (runAlex)
 import Parser (parseProgram)
-import System.IO ()
+import System.Environment (getArgs)
+import System.Exit (exitFailure, exitSuccess)
 
 getProg :: String -> IO (Maybe Prog)
 getProg path = do
@@ -16,13 +17,23 @@ getProg path = do
       print err
       return Nothing
 
-main :: IO ()
-main = do
-  prog <- getProg "teste.lmb"
+-- TODO: make verbose work
+parse :: [String] -> IO ()
+parse ["-h"] = usage >> exitSuccess
+parse ["-v"] = putStrLn "verbose version" >> exitSuccess
+parse [] = usage >> exitSuccess
+parse (file : s) = readAndRun file
+
+usage = do
+  putStrLn "Interpreter for lambda calculus"
+  putStrLn "Usage: stack run -- <file.lam>"
+  putStrLn "With flags: stack run -- -v <file.lam>"
+
+main = getArgs >>= parse
+
+readAndRun :: String -> IO ()
+readAndRun file = do
+  prog <- getProg file
   case prog of
-    Nothing -> putStrLn "error"
-    Just prog ->
-      do
-        let exp = toLambdaExp prog
-        print exp
-        runPrint exp
+    Nothing -> putStrLn "error" >> exitFailure
+    Just prog -> print . run . toLambdaExp $ prog
