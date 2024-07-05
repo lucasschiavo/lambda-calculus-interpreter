@@ -47,7 +47,11 @@ step :: Exp -> Exp
 step var@(Var{}) = var
 step (Lambda name exp) = Lambda name (step exp)
 step (App lamb@(Lambda{}) right) = redex lamb right
-step (App left right) = App (step left) right
+step (App left right)
+  | left' == left = App left (step right)
+  | otherwise = App left' right
+ where
+  left' = step left
 
 run :: Exp -> Exp
 run exp
