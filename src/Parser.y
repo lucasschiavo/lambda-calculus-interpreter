@@ -44,8 +44,12 @@ exp :: { Exp }
 
 simpleExp :: { Exp }
   : name                { Var $1 }
-  | bslash name '.' exp { Lambda $2 $4 }
+  | bslash names '.' exp { foldr Lambda $4 $2 }
   | '(' exp ')'         { $2 }
+
+names :: { [Name] }
+  : name       { [$1] }
+  | name names { $1 : $2 }
 
 body :: { [Dec] }
   : dec { [$1] }
