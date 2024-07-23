@@ -25,6 +25,7 @@ $digit = [0-9]
 $alpha = [a-zA-Z]
 
 @id = ($alpha | _) ($alpha | $digit | _ | ' )*
+@number = $digit+
 
 tokens :-
 
@@ -53,6 +54,7 @@ tokens :-
 
 -- Identifiers
 <0> @id     { tokId }
+<0> @number { tokNumber }
 
 {
 data AlexUserState = AlexUserState
@@ -107,6 +109,13 @@ tokId :: AlexAction RangedToken
 tokId inp@(_, _, str, _) len =
   pure RangedToken
     { rtToken = Identifier $ BS.take len str
+    , rtRange = mkRange inp len
+    }
+
+tokNumber :: AlexAction RangedToken
+tokNumber inp@(_, _, str, _) len =
+  pure RangedToken
+    { rtToken = Number $ (read . BS.unpack . BS.take len $ str :: Integer)
     , rtRange = mkRange inp len
     }
 

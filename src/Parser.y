@@ -1,7 +1,7 @@
 {
 {-# LANGUAGE DeriveFoldable #-}
 module Parser
-  ( parseProgram
+  ( parseProgram,
   ) where
 
 import Data.ByteString.Lazy.Char8 (ByteString, unpack)
@@ -21,6 +21,7 @@ import qualified Lexer as L
 
 %token
   identifier { L.RangedToken (T.Identifier _) _ }
+  number     { L.RangedToken (T.Number _) _}
   let        { L.RangedToken T.Let _ }
   in         { L.RangedToken T.In _ }
   '='        { L.RangedToken T.Equal _ }
@@ -43,9 +44,10 @@ exp :: { Exp }
   | exp simpleExp { App $1 $2 }
 
 simpleExp :: { Exp }
-  : name                { Var $1 }
+  : name                 { Var $1 }
+  | number               { unTok $1 (\(T.Number num) -> numberToLambda num) }
   | bslash names '.' exp { foldr Lambda $4 $2 }
-  | '(' exp ')'         { $2 }
+  | '(' exp ')'          { $2 }
 
 names :: { [Name] }
   : name       { [$1] }
@@ -77,5 +79,11 @@ info = fromJust . getFirst . foldMap pure
 
 (<->) :: L.Range -> L.Range -> L.Range
 L.Range a1 _ <-> L.Range _ b2 = L.Range a1 b2
+
+numberToLambda :: Integer -> Exp
+numberToLambda n = Lambda "f" . Lambda "x" $ generateApp n
+  where
+    generateApp 0 = (Var "x")
+    generateApp n = App (Var "f") (generateApp (n - 1))
 }
 

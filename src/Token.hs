@@ -4,6 +4,7 @@ import Data.ByteString.Lazy.Char8 (ByteString)
 
 data Token
   = Identifier ByteString
+  | Number Integer
   | Let
   | In
   | Equal
